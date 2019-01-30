@@ -1,6 +1,6 @@
 ---
 title: '6\. Worksheet: Diversity Sampling'
-author: "Student Name; Z620: Quantitative Biodiversity, Indiana University"
+author: "Brianna Crawley; Z620: Quantitative Biodiversity, Indiana University"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 geometry: margin=2.54cm
@@ -38,16 +38,43 @@ Create one (and only one, although it can have multiple panels) *publication qua
 Make sure to annotate your code using # symbols so others (including instructors) understand what you have done and why you have done it. 
 
 ```{r}
+require(vegan) #loads the package 'vegan'
+jellybean <- read.table("JellyBeans.txt", sep = "\t", header = TRUE) #load the dataset
+jellybean.num <- jellybean[ , 3:30] #index columns that contain numeric data
+S.obs <- function (x=""){
+  rowSums(x>0) * 1
+  }
+#defines S.obs as function that calculates observed species richness
 
+S.obs(jellybean.num) #calculates observes species richness for jellybean dataset
+C  <- function(x = ""){
+   1 - (rowSums(x==1) / rowSums(x))
+   }
+#defines C as function that calculates coverage
+C(jellybean.num) #calculates coverage for jellybean dataset
 
-
-
+SimpD <- function (x =""){
+  D = 0
+  N = sum(x)
+  for (n_i in x){
+    D = D + (n_i^2) / (N^2)
+  }
+  return(D)
+}
+#defines SimpD as function that calculates Simpson's diversity index
+SimpD(jellybean.num) #calculates Simpson's diversity of jellybean data
+RACresults <- radfit(jellybean.num) #generates rank abundance curves for each site and fits one of five species abundance models to each curve
+plot.new()
+plot(RACresults, las = 1, cex.lab = 1.4, cex.axis = 1.25)
 ```
+
 
 ## 3) Figure caption 
 
-Write an informative yet succicnt (~5 sentences) caption that creates a "stand-alone" figure. 
+Write an informative yet succinct (~5 sentences) caption that creates a "stand-alone" figure. 
 Take a peek at figures and figure captions in a paper published in your favorite journal for inspiration.
+
+Figure 1. Species abundance curves for nine samples of jellybeans. Rank indicates the abundance of the species in comparison to others, while abundance indicates the number of individuals per species. Samples vary in evenness.
 
 ## SUBMITTING YOUR ASSIGNMENT
 Use Knitr to create a PDF of your completed 6.DiversisitySampling_Worksheet.Rmd document, push it to GitHub, and create a pull request.
