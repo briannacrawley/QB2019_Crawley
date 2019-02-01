@@ -1,6 +1,6 @@
 ---
 title: '8\. Worksheet: Among Site (Beta) Diversity -- Part 1'
-author: "Student Name; Z620: Quantitative Biodiversity, Indiana University"
+author: "Brianna Crawley; Z620: Quantitative Biodiversity, Indiana University"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 geometry: margin=2.54cm
@@ -47,10 +47,10 @@ In the R code chunk below, provide the code to:
 4. load the `vegan` R package (be sure to install if needed).  
 
 ```{r}
-
-
-
-
+rm(list=ls())
+getwd()
+setwd("/Users/crawleyb/GitHub/QB2019_Crawley/2.Worksheets/8.BetaDiversity")
+require(vegan)
 ```
 
 ## 2) LOADING DATA
@@ -62,9 +62,10 @@ In the R code chunk below, do the following:
 
 ```{r}
 # note, pleae do not print the dataset when submitting
-
-
-
+install.packages("ade4")
+require(ade4)
+data(doubs)
+str(doubs)
 ```
 
 ***Question 1***:  Describe some of the attributes of the `doubs` dataset.  
@@ -73,9 +74,9 @@ a.  How many objects are in `doubs`?
 b.  How many fish species are there in the `doubs` dataset?
 c.  How many sites are in the `doubs` dataset?
 
-> ***Answer 1a***:  
-> ***Answer 1b***:  
-> ***Answer 1c***:  
+> ***Answer 1a***:  4
+> ***Answer 1b***:  27
+> ***Answer 1c***:  30
 
 ### Visualizing the Doubs River Dataset
 
@@ -85,8 +86,8 @@ a.  How does fish richness vary along the sampled reach of the Doubs River?
 b.  How does Brown Trout (*Salmo trutta*) abundance vary along the sampled reach of the Doubs River?
 c.  What do these patterns say about the limitations of using richness when examining patterns of biodiversity?
 
-> ***Answer 2a***:  
-> ***Answer 2b***:  
+> ***Answer 2a***:  Species richness is fairly low at the earliest sampled sites; richness is highest downstream, with the exception of the 23-25 samples.
+> ***Answer 2b***:  Brown trout is largely absent from downstream sites;
 > ***Answer 2c***:  
 
 ## 3) QUANTIFYING BETA-DIVERSITY
@@ -256,3 +257,11 @@ Finally, compare the compositional similarity of jelly beans in group A and grou
 
 2) Create a cluster diagram or ordination using the jelly bean data. 
 Are there any visual trends that would suggest a difference in composition between group A and group B?
+
+```{r}
+
+
+
+```
+
+
