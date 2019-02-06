@@ -49,7 +49,7 @@ In the R code chunk below, provide the code to:
 ```{r}
 rm(list=ls())
 getwd()
-setwd("C:/Users/wolve/GitHub/QB2019_Crawley/2.Worksheets/8.BetaDiversity")
+setwd("/Users/crawleyb/GitHub/QB2019_Crawley/2.Worksheets/8.BetaDiversity")
 require(vegan)
 ```
 
@@ -89,6 +89,7 @@ c.  What do these patterns say about the limitations of using richness when exam
 > ***Answer 2a***:  Species richness is fairly low at the upstream sites; richness is highest downstream, with the exception of the 23-25 samples, and sites in the middle of the sampled reach.
 > ***Answer 2b***:  Brown trout is largely absent from downstream and middle sites; abundance is highest upstream.
 > ***Answer 2c***:  Species richness itself does not identify the species composition of each community. Using species richness alone as an estimate of brown trout abundance would be erroneous.
+
 
 ## 3) QUANTIFYING BETA-DIVERSITY
 
@@ -253,7 +254,6 @@ spe.corr <- add.spec.scores(fish.pcoa, fishREL, method = "cor.scores")$cproj
 corrcut <- 0.7
 imp.spp <- spe.corr[abs(spe.corr[, 1]) >= corrcut | abs(spe.corr[, 2]) >= corrcut, ]
 fit <- envfit(fish.pcoa, fishREL, perm = 999)
-
 
 ```
 
