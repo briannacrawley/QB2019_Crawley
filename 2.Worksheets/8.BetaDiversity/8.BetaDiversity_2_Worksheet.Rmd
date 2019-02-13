@@ -1,6 +1,6 @@
 ---
 title: '8\. Worksheet: Among Site (Beta) Diversity -- Part 2'
-author: "Student Name; Z620: Quantitative Biodiversity, Indiana University"
+author: "Brianna Crawley; Z620: Quantitative Biodiversity, Indiana University"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 geometry: margin=2.54cm
@@ -40,10 +40,10 @@ In the R code chunk below, provide the code to:
 4. load the `vegan` R package (be sure to install if needed).  
 
 ```{r}
-
-
-
-
+rm(list=ls())
+getwd()
+setwd("/Users/wolve/GitHub/QB2019_Crawley/2.Worksheets/8.BetaDiversity")
+require(vegan)
 ```
 
 ## 2) LOADING DATA
@@ -52,9 +52,8 @@ In the R code chunk below, load the `doubs` dataset from the `ade4` package
 
 ```{r}
 # note, pleae do not print the dataset when submitting
-
-
-
+require("ade4")
+data(doubs)
 ```
 ## 3) HYPOTHESIS TESTING
 
@@ -67,21 +66,25 @@ In the code chunk below, test the hypothesis that fish community composition var
 2. use the multivariate analyses for categorical predictors to describe how fish community structure relates to habitat quality.
 
 ```{r}
+require("indicspecies")
+quality <- c(rep("HQ", 13), rep("MQ", 5), rep("LQ", 6), rep("MQ", 5))
 
+fish <- doubs$fish
+fish <- fish[-8, ]
+adonis(fish ~ quality, method = "bray", permutations = 999)
 
+indval <- multipatt(fish, cluster = quality, func = "IndVal.g", control =  how(nperm=999))
+summary(indval)
 
-
-
-
-
-
-
+fish.rel <- decostand(fish, method = "total")
+phi <- multipatt(fish.rel, cluster = quality, func = "r.g", control = how(nperm=999))
+summary(phi)
 ```
 
 ***Question 1***: Based on the PERMANOVA, IndVal, and phi coefficient analyses, what did you learn about the relationship between habitat quality and the fish species composition?
 Are the different analyses consistent with one another and do they agree with the visualizations (heat maps, cluster dendograms, ordinations) that you created?
 
-> ***Answer 1***: 
+> ***Answer 1***: Based on the results of the PERMANOVA, habitat quality has a significant effect on fish species composition. Indicator values suggest that brown trout and minnow are two species which indicate high and medium site quality. Phi coefficients of association show brown trout, minnow and stone loach have strong preference for high quality habitat, while bleak and roach prefer low quality habitat. These analyses are consistent with one another and agree with earlier visualizations, where cluster analysis and PCoA show site clusters matching with habitat quality classification. Additionally, PCoA identified influential species for high quality and low quality site clusters that align with phi coefficients.
 
 
 ### B.  Multivariate Procedures for Continuous Designs
@@ -93,17 +96,16 @@ In the R code chunk below, do the following:
 2. use a Mantel test to test the hypothesis that fish assemblages are correlated with stream environmental variables.
 
 ```{r}
+fish.dist <- vegdist(doubs$fish[-8, ], method = "bray")
+env.dist <- vegdist(scale(doubs$env[-8,]), method = "euclid")
 
-
-
-
-
+mantel(fish.dist,env.dist)
 ```
 
 ***Question 2***: What do the results from our Mantel test suggest about fish diversity and stream environmental conditions? 
 How does this relate to your hypothesis about stream quality influencing fish communities?
 
-> ***Answer 2***:  
+> ***Answer 2***:  Fish assemblages are correlated with stream environmental conditions. Since habitat quality is dictated by stream conditions, the hypothesis that fish assemblages vary across a gradient of habitat quality aligns with the finding that stream conditions influence fish assemblages.
 
 ### ii.  Constrained Ordination
 In the R code chunk below, do the following:  
@@ -116,30 +118,52 @@ In the R code chunk below, do the following:
 6. plot the constrained ordination results including labeled points for each site, and
 7. add vectors that demonstrate the influence of each environmental factor the constrained ordination.   
 ```{r}
+env.chem <- as.matrix(doubs$env[-8 , 5:11])
 
+fish.db <- vegdist(fish, method = "bray")
+doubs.dbrda <- dbrda(fish.db ~ ., as.data.frame(env.chem))
+ordiplot(doubs.dbrda)
 
+doubs.dbrda.mod0 <- dbrda(fish.db ~ 1, as.data.frame(env.chem))
+doubs.dbrda.mod1 <- dbrda(fish.db ~ ., as.data.frame(env.chem))
+doubs.dbrda <- ordiR2step(doubs.dbrda.mod0, doubs.dbrda.mod1, perm.max = 200)
 
+permutest(doubs.dbrda, permutations = 999)
+envfit(doubs.dbrda, env.chem[,c(4,6,7)], perm = 999)
 
+dbrda.explainedvar1 <- round(doubs.dbrda$CCA$eig[1] /
+                               sum(c(doubs.dbrda$CCA$eig, doubs.dbrda$CA$eig)), 3) * 100
+dbrda.explainedvar2 <- round(doubs.dbrda$CCA$eig[2] /
+                               sum(c(doubs.dbrda$CCA$eig, doubs.dbrda$CA$eig)), 3) * 100
 
+par(mar = c(5, 5, 4, 4) + 0.1)
+plot(scores(doubs.dbrda, display = "wa"), xlim = c(-1.3, 1.1), ylim = c(-1.1, 2.7),
+     xlab = paste("dbRDA 1 (", dbrda.explainedvar1, "%)", sep = ""),
+     ylab = paste("dbRDA 2 (", dbrda.explainedvar2, "%)", sep = ""),
+     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = FALSE)
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
+points(scores(doubs.dbrda, display = "wa"),
+       pch = 19, cex = 3, bg = "gray", col = "gray")
+text(scores(doubs.dbrda, display = "wa"),
+     labels = row.names(scores(doubs.dbrda, display = "wa")))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+vectors <- scores(doubs.dbrda, display = "bp")
+arrows(0, 0, vectors[,1], vectors[, 2],
+       lwd = 2, lty = 1, length = 0.2, col = "red")
+text(vectors[,1], vectors[, 2], pos = 3,
+     labels = row.names(vectors))
+axis(side = 3, lwd.ticks = 2, cex.axis = 1.2, las = 1, col = "red", lwd = 2.2,
+     at = pretty(range(vectors[, 1])) * 2, labels = pretty(range(vectors[, 1])))
+axis(side = 4, lwd.ticks = 2, cex.axis = 1.2, las = 1, col = "red", lwd = 2.2,
+     at = pretty(range(vectors[, 2])) * 2, labels = pretty(range(vectors[, 2])))
 ```
 
 ***Question 3***: Based on the constrained ordination, what are the environmental variables (or groups of correlated variables) that seem to be contributing to variation in fish community structure?
 
-> ***Answer 3***: 
+> ***Answer 3***: Nitrates (nit), dissolved oxygen (oxy) and biological oxygen demand (bdo).
 
 ### iii. Variation Partitioning
 In the code chunk below,   
@@ -151,23 +175,59 @@ In the code chunk below,
 5. Partition the variation among sites into the relative importance of space, environment, spatially structured environment, and residuals,
 6. Plot the variation partitioning output to visualize it.  
 ```{r}
+env.mod <- model.matrix(~ oxy + bdo + nit, as.data.frame(env.chem))[,-1]
 
+rs <- rowSums(fish)/sum(fish)
+doubs.pcnmw <- pcnm(dist(doubs$xy[-8,]), w = rs, dist.ret = T)
+doubs.pcnmw$values > 0
+doubs.space <- as.data.frame(scores(doubs.pcnmw))
+doubs.pcnm.mod0 <- dbrda(fish.db ~ 1, doubs.space)
+doubs.pcnm.mod1 <- dbrda(fish.db ~ ., doubs.space)
+step.pcnm <- ordiR2step(doubs.pcnm.mod0, doubs.pcnm.mod1, perm.max = 200)
+space.mod <- model.matrix(~ PCNM2 + PCNM3 + PCNM4 + PCNM5 + PCNM1 + PCNM13 + PCNM16 + PCNM6, doubs.space)[,-1]
 
+doubs.total.env <- dbrda(fish.db ~ env.mod)
+doubs.total.space <- dbrda(fish.db ~ space.mod)
+doubs.env.cond.space <- dbrda(fish.db ~ env.mod + Condition(space.mod))
+doubs.space.cond.env <- dbrda(fish.db ~ space.mod + Condition(env.mod))
 
+permutest(doubs.env.cond.space, permutations = 999)
+permutest(doubs.space.cond.env, permutations = 999)
+permutest(doubs.total.env, permutations = 999)
+permutest(doubs.total.space, permutations = 999)
 
-
-
+doubs.varpart <- varpart(fish.db, env.mod, space.mod)
+par(mar = c(2, 2, 2, 2))
+plot(doubs.varpart)
+text(1, 0.25, "Space")
+text(0, 0.25, "Env")
+mtext("Variation Partitioning of \nDoubs Fish Diversity", side = 3, line = -3)
 
 ```
 
 ***Question 4***: Interpret the variation partitioning results.   
 
-> ***Answer 4***: 
+> ***Answer 4***: Fish diversity is best explained by spatially structured environmental variation.
 
 ## SYNTHESIS
 
 1) Using the jelly bean data from class (i.e., JellyBeans.txt), perform a PERMANOVA to test whether or not the vicariance event (random splitting of source community) had an affect on jelly bean composition.
 Based on your previous analyses with this data set, what are your thoughts about the importance of stochastic vs. deterministic factors on estimates of biodiversity?
+
+```{r}
+setwd("/Users/wolve/GitHub/QB2019_Crawley/2.Worksheets/6.DiversitySampling")
+jellybeans <- read.table("JellyBeans.txt", sep = "\t", header = TRUE)
+jellybeans$GreenTrans <- c(1, 5, 5, 4, 7, 3, 4, 2, 4)
+jellybeans$Rainbow <- c(2, 2, 1, 3, 1, 3, 1, 2, 0)
+jellybeans.new <- jellybeans[ , -c(1, 2, 15, 30)]
+
+group <- c(rep("A", 3), rep("B", 2), rep("A", 1), rep("B", 1), rep("A", 1), rep("B", 1))
+adonis(jellybeans.new ~ group, method = "bray", permutations = 999)
+
+```
+
+> Differences between groups A and B were significant, but little of the variation could be explained by the vicariance event (R2 = 0.21594). Stochastic factors can play a large role in structuring communities - in this case, randomly splitting the source population resulted in some differences in composition.
+
 
 2) Load the dataset you are using for your Team Project. 
 Perform an ordination to visualize your dataset.
@@ -175,3 +235,41 @@ Using this ordination, develop some hypotheses relevant to $\beta$-diversity.
 Use a statistic to test one of these hypotheses.
 Succinctly explain the finding and its relevance to your system.
 
+```{r}
+setwd("/Users/wolve/GitHub/QB19_IndependentProject")
+PGS.data <- read.csv("sitebyspecies.csv", header = TRUE)
+PGS.data <- PGS.data[ , -1]
+
+PGS.ds <- vegdist(PGS.data, method = "bray", binary = TRUE) 
+PGS.pcoa <- cmdscale(PGS.ds, eig = TRUE, k = 3)
+explainvar1.PGS <- round(PGS.pcoa$eig[1] / sum (PGS.pcoa$eig), 3) * 100
+explainvar2.PGS <- round(PGS.pcoa$eig[2] / sum (PGS.pcoa$eig), 3) * 100
+explainvar3.PGS <- round(PGS.pcoa$eig[3] / sum (PGS.pcoa$eig), 3) * 100
+sum.eigPGS <- sum(explainvar1.PGS, explainvar2.PGS, explainvar3.PGS)
+sum.eigPGS
+
+par(mar = c(5, 5, 1, 2) + 0.1) 
+plot(PGS.pcoa$points[, 1], PGS.pcoa$points[, 2],
+     ylim = c(-0.2, 0.7),
+     xlab = paste("PCoA 1 (", explainvar1.PGS, "%)", sep = ""),
+     ylab = paste("PCoA 2 (", explainvar2.PGS, "%)", sep = ""),
+     pch = 16, cex = 2, type = "n", cex.lab = 1.5, cex.axis = 1.2, axes = FALSE)
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1) 
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1) 
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
+points(PGS.pcoa$points[, 1], PGS.pcoa$points[, 2], 
+    pch = 19, cex = 3, bg = "gray", col = "gray")
+text(PGS.pcoa$points[, 1], PGS.pcoa$points[, 2], 
+    labels = rownames(PGS.data))
+  
+site.type <- c(rep("Business", 1), rep ("Residential", 1), rep("School", 1), rep("Residential", 1), rep("Business", 1), rep("Other", 1), rep ("Business", 1), rep("Other", 2), rep("Residential", 1), rep("School", 2), rep ("Business", 1), rep("School", 1), rep("Residential", 2), rep("School", 1), rep("Other", 1), rep("Business", 1), rep("Residential", 1))
+adonis(PGS.data ~ site.type, method = "bray", permutations = 999)
+
+region.SES <- c(rep("Mid", 1), rep("Low", 1), rep("Mid", 1), rep("Low", 2), rep("Mid", 1), rep("Low", 1), rep("Upper", 1),  rep("Low", 2), rep("Mid", 2), rep("Upper", 1), rep("Low", 3), rep("Upper", 1), rep("Mid", 1), rep("Low", 1), rep("Mid", 1)) 
+adonis(PGS.data ~ region.SES, method = "bray", permutations = 999)
+
+```
+
+> Hypotheses: Could sites be clustered based on the location of the site (i.e. in a residential area, commercial area, schoolyard, etc) or by socioeconomic status of the surrounding area? These factors could be proxies for stewardship activity level; school yard sites, for example, might be weeded less frequently than a residential site.
+> Results: Neither site type nor median income classification explains variance in sites - species assemblages might be better explained by number of initially planted species, presence or abundance of mulch, etc. 
